@@ -84,7 +84,7 @@
 	etspi-spi@0 {
 		compatible = "etspi,et5xx";
 		reg = <0>;
-		spi-max-frequency = <16000000>;
+		spi-max-frequency = <35000000>;
 		etspi-sleepPin = <&expander_gpios 20 0>;
 		etspi-drdyPin = <&tlmm 26 0x01>;
 		etspi-ldoPin = <&expander_gpios 18 0>;

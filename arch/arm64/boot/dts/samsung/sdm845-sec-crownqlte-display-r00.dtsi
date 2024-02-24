@@ -30,7 +30,7 @@
 
 				config {
 					pins = "gpio6";
-					drive-strength = <8>;   /* 8 mA */
+					drive-strength = <6>;   /* 6 mA */ /* stock 8 mA */
 					bias-disable = <0>;   /* no pull */
 				};
 			};
@@ -147,7 +147,7 @@
 	ddi_spi:ddi_spi@0  {	// LCD_SPI
 		compatible = "ss,ddi-spi";
 		reg = <0>;
-		spi-max-frequency = <16000000>;
+		spi-max-frequency = <32000000>;
 #if 0
 		spi-max-frequency = <16000000>;
 		read-chunk-size  = <0x2000> ;
@@ -197,9 +197,9 @@
 
 		qcom,dsi-panel = <&ss_dsi_panel_S6E3HA8_AMB638RD01_WQHD>;
 
-		vci-supply = <&s2dos05_l4>; /* 3.0V, S2DOS05 LDO4 */
-		vdd3-supply = <&s2dos05_l1>; /* 1.8V, S2DOS05 LDO1 */
-		vddr-supply = <&s2dos05_buck1>; /* 1.6V, S2DOS05 buck */
+		vci-supply = <&s2dos05_l4>; /* 2.8V, S2DOS05 LDO4 */
+		vdd3-supply = <&s2dos05_l1>; /* 1.7V, S2DOS05 LDO1 */
+		vddr-supply = <&s2dos05_buck1>; /* 1.5V, S2DOS05 buck */
 	};
 
 	/* PBA */
@@ -243,8 +243,8 @@
 
 	samsung,lpm-power-control;
 	samsung,lpm-power-control-supply-name = "vddr";
-	samsung,lpm-power-control-supply-min-voltage = <1500000>;
-	samsung,lpm-power-control-supply-max-voltage = <1500000>;
+	samsung,lpm-power-control-supply-min-voltage = <1400000>;
+	samsung,lpm-power-control-supply-max-voltage = <1400000>;
 	samsung,lpm-power-control-elvss-name = "s2dos05-elvss";
 	samsung,lpm-power-control-elvss-lpm-voltage = <2000>;
 	samsung,lpm-power-control-elvss-normal-voltage = <8000>;
@@ -256,8 +256,8 @@
 		qcom,panel-supply-entry@0 {
 		    reg = <0>;
 		    qcom,supply-name = "vdd3";
-		    qcom,supply-min-voltage = <1800000>;
-		    qcom,supply-max-voltage = <1800000>;
+		    qcom,supply-min-voltage = <1700000>;
+		    qcom,supply-max-voltage = <1700000>;
 		    qcom,supply-enable-load = <100000>;
 		    qcom,supply-disable-load = <100>;
 		    qcom,supply-pre-on-sleep = <0>; /* unit is ms*/
@@ -267,8 +267,8 @@
 		qcom,panel-supply-entry@1 {
 		    reg = <1>;
 		    qcom,supply-name = "vddr";
-		    qcom,supply-min-voltage = <1600000>;
-		    qcom,supply-max-voltage = <1600000>;
+		    qcom,supply-min-voltage = <1500000>;
+		    qcom,supply-max-voltage = <1500000>;
 		    qcom,supply-enable-load = <100000>;
 		    qcom,supply-disable-load = <100>;
 		    qcom,supply-pre-on-sleep = <0>; /* unit is ms*/
@@ -278,8 +278,8 @@
 		qcom,panel-supply-entry@2 {
 		    reg = <2>;
 		    qcom,supply-name = "vci";
-		    qcom,supply-min-voltage = <3000000>;
-		    qcom,supply-max-voltage = <3000000>;
+		    qcom,supply-min-voltage = <2800000>;
+		    qcom,supply-max-voltage = <2800000>;
 		    qcom,supply-enable-load = <100000>;
 		    qcom,supply-disable-load = <100>;
 		    qcom,supply-pre-on-sleep = <0>; /* unit is ms*/

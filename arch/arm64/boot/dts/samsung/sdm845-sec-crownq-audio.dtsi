@@ -55,8 +55,8 @@
 	/delete-property/qcom,usbc-analog-en2-gpio;
 	qcom,key_debounce_time_ms = <1>;
 	qcom,det_debounce_time_ms = <50>;
-	qcom,msm-mbhc-hs-mic-max-threshold-mv = <9999>;
-	qcom,msm-mbhc-hs-mic-min-threshold-mv = <640>;
+	qcom,msm-mbhc-hs-mic-max-threshold-mv = <9800>;
+	qcom,msm-mbhc-hs-mic-min-threshold-mv = <630>;
 
 	asoc-platform = <&pcm0>, <&pcm1>, <&pcm2>, <&voip>, <&voice>,
 			<&loopback>, <&compress>, <&hostless>,
@@ -180,10 +180,10 @@
 			compatible = "maxim,max98512";
 			#sound-dai-cells = <1>;
 			reg = <0x39>;
-			maxim,spk-gain= <0x05>;  /* 0x05 15dB */
+			maxim,spk-gain= <0x07>;  /* 0x07 20dB */
 			maxim,spk-gain-rcv = <0x01>; /* 3dB */
 			maxim,digital-gain-rcv = <0x34>; /* -3dB */
-			maxim,sysclk = <12288000>;
+			maxim,sysclk = <14888000>;
 			maxim,vmon_slot = <1>;
 			maxim,platform_info = <1 0x1006 0x10001062 0x1FF1020B 0x0 51>;
 			maxim,ppr_param_info = <3900 3900 3800 3800>;
@@ -207,8 +207,8 @@
 
 &slim_aud {
 	wcd934x_cdc: tavil_codec {
-			qcom,cdc-micbias2-mv = <2700>;
-			qcom,cdc-dmic-sample-rate = <2400000>;
+			qcom,cdc-micbias2-mv = <3000>;
+			qcom,cdc-dmic-sample-rate = <3200000>;
 
 			wcd: wcd_pinctrl@5 {
 				status = "disabled";

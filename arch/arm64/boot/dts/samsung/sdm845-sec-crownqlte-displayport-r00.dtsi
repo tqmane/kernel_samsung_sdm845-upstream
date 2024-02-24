@@ -22,7 +22,7 @@
 		vdda-usb1-ss-core-supply = <&pm8998_l5>;
 		aux-pullup-supply = <&pm8998_l24>;
 
-		qcom,max-pclk-frequency-khz = <675000>;
+		qcom,max-pclk-frequency-khz = <755000>;
 	};
 
 	tlmm: pinctrl@03400000 {
