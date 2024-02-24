@@ -104,7 +104,6 @@ void show_pte(unsigned long addr)
 	} else {
 		pr_alert("[%016lx] address between user and kernel address ranges\n",
 			 addr);
-		sec_debug_store_pte((unsigned long)addr, 1);
 		return;
 	}
 
@@ -114,9 +113,6 @@ void show_pte(unsigned long addr)
 
 	pgd = pgd_offset(mm, addr);
 	pr_alert("[%016lx] *pgd=%016llx", addr, pgd_val(*pgd));
-
-	sec_debug_store_pte((unsigned long)addr, 1);
-	sec_debug_store_pte((unsigned long)pgd_val(*pgd), 2);
 
 	do {
 		pud_t *pud;
@@ -227,8 +223,6 @@ static void __do_kernel_fault(unsigned long addr, unsigned int esr,
 		 "paging request", addr);
 
 	show_pte(addr);
-	kryo3xx_check_l1_l2_ecc(NULL);
-	kryo3xx_check_l3_scu_error(NULL);
 	die("Oops", regs, esr);
 	bust_spinlocks(0);
 	do_exit(SIGKILL);
@@ -377,7 +371,7 @@ static int __kprobes do_page_fault(unsigned long addr, unsigned int esr,
 		mm_flags |= FAULT_FLAG_WRITE;
 	}
 
-	if (addr < TASK_SIZE && is_permission_fault(esr, regs)) {
+	if (is_permission_fault(esr) && (addr < TASK_SIZE)) {
 		/* regs->orig_addr_limit may be 0 if we entered from EL0 */
 		if (regs->orig_addr_limit == KERNEL_DS)
 			die("Accessing user space memory with fs=KERNEL_DS", regs, esr);
@@ -522,23 +516,6 @@ done:
 
 no_context:
 	__do_kernel_fault(addr, esr, regs);
-	return 0;
-}
-
-static int do_tlb_conf_fault(unsigned long addr,
-				unsigned int esr,
-				struct pt_regs *regs)
-{
-#define SCM_TLB_CONFLICT_CMD	0x1F
-	struct scm_desc desc = {
-		.args[0] = addr,
-		.arginfo = SCM_ARGS(1),
-	};
-
-	if (scm_call2_atomic(SCM_SIP_FNID(SCM_SVC_MP, SCM_TLB_CONFLICT_CMD),
-						&desc))
-		return 1;
-
 	return 0;
 }
 
@@ -776,8 +753,6 @@ asmlinkage int __exception do_debug_exception(unsigned long addr_if_watchpoint,
 	 */
 	if (interrupts_enabled(regs))
 		trace_hardirqs_off();
-
-	sec_debug_save_fault_info(esr, inf->name, addr_if_watchpoint, 0UL);
 
 	if (user_mode(regs) && pc > TASK_SIZE)
 		arm64_apply_bp_hardening();

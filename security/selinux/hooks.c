@@ -574,38 +574,11 @@ static int may_context_mount_inode_relabel(u32 sid,
 
 static int selinux_is_genfs_special_handling(struct super_block *sb)
 {
-	struct superblock_security_struct *sbsec = sb->s_security;
-
-	if (sbsec->behavior == SECURITY_FS_USE_XATTR ||
-	    sbsec->behavior == SECURITY_FS_USE_TRANS ||
-	    sbsec->behavior == SECURITY_FS_USE_TASK ||
-	    sbsec->behavior == SECURITY_FS_USE_NATIVE)
-		return 1;
-
-	if (strncmp(sb->s_type->name, "pstore", sizeof("pstore")) == 0)
-		return 1;
-
-	if (strncmp(sb->s_type->name, "debugfs", sizeof("debugfs")) == 0)
-		return 1;
-
-	if (strncmp(sb->s_type->name, "f2fs", sizeof("f2fs")) == 0)
-		return 1;
-
-	if (strncmp(sb->s_type->name, "sdcardfs", sizeof("sdcardfs")) == 0)
-		return 1;
-
-	/* Special handling for sysfs. Is genfs but also has setxattr handler*/
-	if (strncmp(sb->s_type->name, "sysfs", sizeof("sysfs")) == 0)
-		return 1;
-
-	/*
-	 * Special handling for rootfs. Is genfs but supports
-	 * setting SELinux context on in-core inodes.
-	 */
-	if (strncmp(sb->s_type->name, "rootfs", sizeof("rootfs")) == 0)
-		return 1;
-
-	return 0;
+	/* Special handling. Genfs but also in-core setxattr handler */
+	return	!strcmp(sb->s_type->name, "sysfs") ||
+		!strcmp(sb->s_type->name, "pstore") ||
+		!strcmp(sb->s_type->name, "debugfs") ||
+		!strcmp(sb->s_type->name, "rootfs");
 }
 
 static int selinux_is_sblabel_mnt(struct super_block *sb)
@@ -7060,12 +7033,7 @@ static void selinux_inode_invalidate_secctx(struct inode *inode)
  */
 static int selinux_inode_notifysecctx(struct inode *inode, void *ctx, u32 ctxlen)
 {
-	int rc;
-#ifdef CONFIG_RKP_KDP
-	if ((rc = security_integrity_current()))
-		return rc;
-#endif  /* CONFIG_RKP_KDP */
-	rc = selinux_inode_setsecurity(inode, XATTR_SELINUX_SUFFIX,
+	int rc = selinux_inode_setsecurity(inode, XATTR_SELINUX_SUFFIX,
 					   ctx, ctxlen, 0);
 	/* Do not return error when suppressing label (SBLABEL_MNT not set). */
 	return rc == -EOPNOTSUPP ? 0 : rc;

@@ -1016,7 +1016,7 @@ static int l2tp_udp_recv_core(struct l2tp_tunnel *tunnel, struct sk_buff *skb)
 	    l2tp_v3_ensure_opt_in_linear(session, skb, &ptr, &optr))
 		goto error;
 
-	l2tp_recv_common(session, skb, ptr, optr, hdrflags, length);
+	l2tp_recv_common(session, skb, ptr, optr, hdrflags, length, payload_hook);
 	l2tp_session_dec_refcount(session);
 
 	return 0;

@@ -87,6 +87,9 @@
 /* Broadcom cores */
 #define ARM_CPU_PART_BRAHMA_B15		0x420000f0
 
+/* Broadcom cores */
+#define ARM_CPU_PART_BRAHMA_B15		0x420000f0
+
 /* DEC implemented cores */
 #define ARM_CPU_PART_SA1100		0x4400a110
 

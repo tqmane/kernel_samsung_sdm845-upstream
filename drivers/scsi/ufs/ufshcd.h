@@ -867,7 +867,7 @@ struct SEC_UFS_counting {
  * @clk_list_head: UFS host controller clocks list node head
  * @pwr_info: holds current power mode
  * @max_pwr_info: keeps the device max valid pwm
- * @hibern8_on_idle: UFS Hibern8 on idle related data
+ * @desc_size: descriptor sizes reported by device
  * @urgent_bkops_lvl: keeps track of urgent bkops level for device
  * @is_urgent_bkops_lvl_checked: keeps track if the urgent bkops level for
  *  device is known or not.
@@ -1091,42 +1091,7 @@ struct ufs_hba {
 	enum bkops_status urgent_bkops_lvl;
 	bool is_urgent_bkops_lvl_checked;
 
-	/* sync b/w diff contexts */
-	struct rw_semaphore lock;
-	unsigned long shutdown_in_prog;
-
-	struct reset_control *core_reset;
-	/* If set, don't gate device ref_clk during clock gating */
-	bool no_ref_clk_gating;
-
-	int scsi_block_reqs_cnt;
-
-	bool full_init_linereset;
-	struct pinctrl *pctrl;
-
-	int latency_hist_enabled;
-	struct io_latency_state io_lat_read;
-	struct io_latency_state io_lat_write;
-
-	char unique_number[UFS_UN_MAX_DIGITS + 1];
-
 	struct ufs_desc_size desc_size;
-
-	unsigned int lc_info;
-
-#if defined(CONFIG_SCSI_UFS_QCOM)
-	struct device_attribute hw_reset_info_attr;
-#endif
-
-#if defined(SEC_UFS_ERROR_COUNT)
-	struct SEC_UFS_counting SEC_err_info;
-#endif
-	bool UFS_fatal_mode_done;
-	bool restore_needed;
-	struct work_struct fatal_mode_work;
-#if defined(CONFIG_UFS_DATA_LOG)
-	atomic_t	log_count;
-#endif
 };
 
 static inline void ufshcd_mark_shutdown_ongoing(struct ufs_hba *hba)
@@ -1370,12 +1335,7 @@ int ufshcd_query_descriptor(struct ufs_hba *hba, enum query_opcode opcode,
 	enum desc_idn idn, u8 index, u8 selector, u8 *desc_buf, int *buf_len);
 
 int ufshcd_hold(struct ufs_hba *hba, bool async);
-void ufshcd_release(struct ufs_hba *hba, bool no_sched);
-int ufshcd_wait_for_doorbell_clr(struct ufs_hba *hba, u64 wait_timeout_us);
-int ufshcd_change_power_mode(struct ufs_hba *hba,
-			     struct ufs_pa_layer_attr *pwr_mode);
-void ufshcd_abort_outstanding_transfer_requests(struct ufs_hba *hba,
-		int result);
+void ufshcd_release(struct ufs_hba *hba);
 
 int ufshcd_map_desc_id_to_length(struct ufs_hba *hba, enum desc_idn desc_id,
 	int *desc_length);

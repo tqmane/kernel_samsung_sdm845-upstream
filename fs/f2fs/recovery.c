@@ -290,8 +290,7 @@ static int recover_inode(struct inode *inode, struct page *page)
 	return 0;
 }
 
-static int find_fsync_dnodes(struct f2fs_sb_info *sbi, struct list_head *head,
-				bool check_only)
+static int find_fsync_dnodes(struct f2fs_sb_info *sbi, struct list_head *head)
 {
 	struct curseg_info *curseg;
 	struct page *page = NULL;
@@ -327,13 +326,9 @@ static int find_fsync_dnodes(struct f2fs_sb_info *sbi, struct list_head *head,
 
 		entry = get_fsync_inode(head, ino_of_node(page));
 		if (!entry) {
-			bool quota_inode = false;
-
-			if (!check_only &&
-					IS_INODE(page) && is_dent_dnode(page)) {
-				err = f2fs_recover_inode_page(sbi, page);
-				if (err) {
-					f2fs_put_page(page, 1);
+			if (IS_INODE(page) && is_dent_dnode(page)) {
+				err = recover_inode_page(sbi, page);
+				if (err)
 					break;
 				}
 				quota_inode = true;

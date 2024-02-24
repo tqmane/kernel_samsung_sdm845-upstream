@@ -28,7 +28,6 @@
 #include <linux/fs.h>
 #include <linux/mm.h>
 #include <linux/vmalloc.h>
-#include <linux/bitops.h>
 #include "stm.h"
 
 #include <uapi/linux/stm.h>

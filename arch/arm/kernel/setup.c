@@ -735,6 +735,14 @@ struct proc_info_list *lookup_processor(u32 midr)
 
 static void __init setup_processor(void)
 {
+	unsigned int midr = read_cpuid_id();
+	struct proc_info_list *list = lookup_processor(midr);
+
+	return list;
+}
+
+static void __init setup_processor(void)
+{
 	unsigned int midr;
 	struct proc_info_list *list;
 

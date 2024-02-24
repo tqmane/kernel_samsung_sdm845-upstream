@@ -2837,7 +2837,7 @@ static bool sd_validate_opt_xfer_size(struct scsi_disk *sdkp,
 {
 	struct scsi_device *sdp = sdkp->device;
 	unsigned int opt_xfer_bytes =
-		sdkp->opt_xfer_blocks * sdp->sector_size;
+		logical_to_bytes(sdp, sdkp->opt_xfer_blocks);
 
 	if (sdkp->opt_xfer_blocks == 0)
 		return false;
@@ -2948,8 +2948,8 @@ static int sd_revalidate_disk(struct gendisk *disk)
 	q->limits.max_dev_sectors = logical_to_sectors(sdp, dev_max);
 
 	if (sd_validate_opt_xfer_size(sdkp, dev_max)) {
-		rw_max = q->limits.io_opt =
-						sdkp->opt_xfer_blocks * sdp->sector_size;
+		q->limits.io_opt = logical_to_bytes(sdp, sdkp->opt_xfer_blocks);
+		rw_max = logical_to_sectors(sdp, sdkp->opt_xfer_blocks);
 	} else
 		rw_max = min_not_zero(logical_to_sectors(sdp, dev_max),
 				      (sector_t)BLK_DEF_MAX_SECTORS);

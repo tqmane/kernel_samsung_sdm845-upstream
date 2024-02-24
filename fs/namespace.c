@@ -1355,29 +1355,6 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
 			goto out_free;
 	}
 
-#ifdef CONFIG_RKP_NS_PROT
-	nsflags = old->mnt->mnt_flags & ~(MNT_WRITE_HOLD|MNT_MARKED|MNT_INTERNAL);
-	/* Don't allow unprivileged users to change mount flags */
-	if (flag & CL_UNPRIVILEGED) {
-		nsflags |= MNT_LOCK_ATIME;
-
-		if (nsflags & MNT_READONLY)
-			nsflags |= MNT_LOCK_READONLY;
-
-		if (nsflags & MNT_NODEV)
-			nsflags |= MNT_LOCK_NODEV;
-
-		if (nsflags & MNT_NOSUID)
-			nsflags |= MNT_LOCK_NOSUID;
-
-		if (nsflags & MNT_NOEXEC)
-			nsflags |= MNT_LOCK_NOEXEC;
-	}
-	if ((flag & CL_UNPRIVILEGED) &&
-	    (!(flag & CL_EXPIRE) || list_empty(&old->mnt_expire)))
-		nsflags |= MNT_LOCKED;
-	rkp_assign_mnt_flags(mnt->mnt, nsflags);
-#else
 	mnt->mnt.mnt_flags = old->mnt.mnt_flags;
 	mnt->mnt.mnt_flags &= ~(MNT_WRITE_HOLD|MNT_MARKED|MNT_INTERNAL);
 	/* Don't allow unprivileged users to change mount flags */
@@ -2009,11 +1986,7 @@ static int do_umount(struct mount *mnt, int flags)
 
 	/* Recheck MNT_LOCKED with the locks held */
 	retval = -EINVAL;
-#ifdef CONFIG_RKP_NS_PROT
-	if (mnt->mnt->mnt_flags & MNT_LOCKED)
-#else
 	if (mnt->mnt.mnt_flags & MNT_LOCKED)
-#endif
 		goto out;
 
 	event++;
@@ -2125,12 +2098,7 @@ SYSCALL_DEFINE2(umount, char __user *, name, int, flags)
 		goto dput_and_out;
 	if (!check_mnt(mnt))
 		goto dput_and_out;
-
-#ifdef CONFIG_RKP_NS_PROT
-	if (mnt->mnt->mnt_flags & MNT_LOCKED)
-#else
-	if (mnt->mnt.mnt_flags & MNT_LOCKED)
-#endif
+	if (mnt->mnt.mnt_flags & MNT_LOCKED) /* Check optimistically */
 		goto dput_and_out;
 	retval = -EPERM;
 	if (flags & MNT_FORCE && !capable(CAP_SYS_ADMIN))
@@ -2210,11 +2178,7 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
 		for (s = r; s; s = next_mnt(s, r)) {
 			if (!(flag & CL_COPY_UNBINDABLE) &&
 			    IS_MNT_UNBINDABLE(s)) {
-#ifdef CONFIG_RKP_NS_PROT
-				if (s->mnt->mnt_flags & MNT_LOCKED) {
-#else
 				if (s->mnt.mnt_flags & MNT_LOCKED) {
-#endif
 					/* Both unbindable and locked. */
 					q = ERR_PTR(-EPERM);
 					goto out;

@@ -3322,37 +3322,6 @@ static int __clk_core_init(struct clk_core *core)
 	if (core->ops->init)
 		core->ops->init(core->hw);
 
-	/*
-	 * enable clocks with the CLK_ENABLE_HAND_OFF flag set
-	 *
-	 * This flag causes the framework to enable the clock at registration
-	 * time, which is sometimes necessary for clocks that would cause a
-	 * system crash when gated (e.g. cpu, memory, etc). The prepare_count
-	 * is migrated over to the first clk consumer to call clk_prepare().
-	 * Similarly the clk's enable_count is migrated to the first consumer
-	 * to call clk_enable().
-	 */
-	if (core->flags & CLK_ENABLE_HAND_OFF) {
-		unsigned long flags;
-
-		/*
-		 * Few clocks might have hardware gating which would be
-		 * required to be ON before prepare/enabling the clocks. So
-		 * check if the clock has been turned ON earlier and we should
-		 * prepare/enable those clocks.
-		 */
-		if (clk_core_is_enabled(core)) {
-			core->need_handoff_prepare = true;
-			core->need_handoff_enable = true;
-			ret = clk_core_prepare(core);
-			if (ret)
-				goto out;
-			flags = clk_enable_lock();
-			clk_core_enable(core);
-			clk_enable_unlock(flags);
-		}
-	}
-
 	kref_init(&core->ref);
 out:
 	clk_prepare_unlock();

@@ -75,9 +75,6 @@
 
 #include "internal.h"
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/pagefault.h>
-
 #if defined(LAST_CPUPID_NOT_IN_PAGE_FLAGS) && !defined(CONFIG_COMPILE_TEST)
 #warning Unfortunate NUMA and NUMA Balancing config, growing page-frame for last_cpupid.
 #endif
@@ -3138,9 +3135,8 @@ map_pte:
 	 * pte_none() under vmf->ptl protection when we return to
 	 * alloc_set_pte().
 	 */
-	if (!pte_map_lock(vma->vm_mm, fe))
-		return VM_FAULT_RETRY;
-
+	fe->pte = pte_offset_map_lock(vma->vm_mm, fe->pmd, fe->address,
+			&fe->ptl);
 	return 0;
 }
 
@@ -3557,7 +3553,7 @@ static int do_fault(struct fault_env *fe)
 		ret = VM_FAULT_SIGBUS;
 	else if (!(fe->flags & FAULT_FLAG_WRITE))
 		ret = do_read_fault(fe, pgoff);
-	else if (!(fe->vma_flags & VM_SHARED))
+	else if (!(vma->vm_flags & VM_SHARED))
 		ret = do_cow_fault(fe, pgoff);
 	else
 		ret = do_shared_fault(fe, pgoff);

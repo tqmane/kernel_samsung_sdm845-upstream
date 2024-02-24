@@ -1094,8 +1094,6 @@ static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long arg)
 			(too_many_pipe_buffers_hard(user_bufs) ||
 			 too_many_pipe_buffers_soft(user_bufs)) &&
 			is_unprivileged_user()) {
-		pr_err("%s:%d nr_pages: %u, buffers: %u, size: %u, pipe_max_size: %u\n"
-			, __func__, __LINE__, nr_pages, pipe->buffers, size, pipe_max_size);
 		ret = -EPERM;
 		goto out_revert_acct;
 	}
@@ -1169,9 +1167,6 @@ int pipe_proc_fn(struct ctl_table *table, int write, void __user *buf,
 		return -EINVAL;
 
 	pipe_max_size = rounded_pipe_max_size;
-	
-	WARN_ON(1);
-
 	return ret;
 }
 

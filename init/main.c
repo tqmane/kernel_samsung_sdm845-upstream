@@ -759,26 +759,6 @@ asmlinkage __visible void __init start_kernel(void)
 
 #ifndef CONFIG_SAMSUNG_PRODUCT_SHIP
 	pr_notice("Kernel command line: %s\n", boot_command_line);
-#else
-	for (i = 0; i < ARRAY_SIZE(erase_string); i++) {
-		len = strlen(erase_string[i]);
-		erase_cmd_start = strstr(erased_command_line, erase_string[i]);
-		if (erase_cmd_start == NULL)
-			continue;
-
-		erase_cmd_end = strstr(erase_cmd_start, " ");
-
-		if ( (erase_cmd_end != NULL) && (erase_cmd_start != NULL)
-				&& (erase_cmd_end > erase_cmd_start) ) {
-			value_len = (size_t)(erase_cmd_end - erase_cmd_start) - len;
-
-			for (j = 0; j < value_len; j++) {
-				erase_cmd_start[len + j] = '0';
-			}
-		}
-	}
-	pr_notice("Kernel command line: %s\n", erased_command_line);
-#endif
 	/* parameters may set static keys */
 	jump_label_init();
 	parse_early_param();

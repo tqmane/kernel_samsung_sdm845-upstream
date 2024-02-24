@@ -1714,7 +1714,7 @@ static int fanout_add(struct sock *sk, u16 id, u16 type_flags)
 			po->fanout = match;
 			po->rollover = rollover;
 			rollover = NULL;
-			refcount_set(&match->sk_ref, refcount_read(&match->sk_ref) + 1);
+			atomic_inc(&match->sk_ref);
 			__fanout_link(sk, po);
 			err = 0;
 		}

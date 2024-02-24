@@ -453,9 +453,6 @@ static int pmic_gpio_config_get(struct pinctrl_dev *pctldev,
 			return -EINVAL;
 		arg = 1;
 		break;
-	case PIN_CONFIG_OUTPUT_ENABLE:
-		arg = pad->output_enabled;
-		break;
 	case PIN_CONFIG_OUTPUT:
 		arg = pad->out_value;
 		break;

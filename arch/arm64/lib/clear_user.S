@@ -30,7 +30,8 @@
  * Alignment fixed up by hardware.
  */
 ENTRY(__arch_clear_user)
-	uaccess_enable_not_uao x2, x3, x4
+ALTERNATIVE("nop", __stringify(SET_PSTATE_PAN(0)), ARM64_ALT_PAN_NOT_UAO, \
+	    CONFIG_ARM64_PAN)
 	mov	x2, x1			// save the size for fixup return
 	subs	x1, x1, #8
 	b.mi	2f

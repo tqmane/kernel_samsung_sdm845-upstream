@@ -4340,7 +4340,6 @@ static int __sched_setscheduler(struct task_struct *p,
 
 	/* The pi code expects interrupts enabled */
 	BUG_ON(pi && in_interrupt());
-
 recheck:
 	/* double check policy once rq lock held */
 	if (policy < 0) {

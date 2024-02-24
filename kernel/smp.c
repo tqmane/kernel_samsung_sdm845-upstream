@@ -595,8 +595,6 @@ void __init smp_init(void)
 			cpu_up(cpu);
 	}
 
-	free_boot_cpu_mask();
-
 	/* Final decision about SMT support */
 	cpu_smt_check_topology();
 	/* Any cleanup work */

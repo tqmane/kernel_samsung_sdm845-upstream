@@ -609,9 +609,13 @@ static bool is_alive(struct f2fs_sb_info *sbi, struct f2fs_summary *sum,
 	if (IS_ERR(node_page))
 		return false;
 
-	if (f2fs_get_node_info(sbi, nid, dni)) {
-		f2fs_put_page(node_page, 1);
-		return false;
+	get_node_info(sbi, nid, dni);
+
+	if (sum->version != dni->version) {
+		f2fs_msg(sbi->sb, KERN_WARNING,
+				"%s: valid data with mismatched node version.",
+				__func__);
+		set_sbi_flag(sbi, SBI_NEED_FSCK);
 	}
 
 	if (sum->version != dni->version) {
@@ -943,7 +947,7 @@ retry:
 
 		set_cold_data(page);
 
-		err = f2fs_do_write_data_page(&fio);
+		err = do_write_data_page(&fio);
 		if (err) {
 			clear_cold_data(page);
 			if (err == -ENOMEM) {
@@ -1184,8 +1188,7 @@ static int do_garbage_collect(struct f2fs_sb_info *sbi,
 				"type [%d, %d] in SSA and SIT",
 				segno, type, GET_SUM_TYPE((&sum->footer)));
 			set_sbi_flag(sbi, SBI_NEED_FSCK);
-			f2fs_stop_checkpoint(sbi, false);
-			goto skip;
+			goto next;
 		}
 
 		/*

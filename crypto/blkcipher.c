@@ -103,11 +103,6 @@ int blkcipher_walk_done(struct blkcipher_desc *desc,
 	unsigned int n; /* bytes processed */
 	bool more;
 
-#ifdef CONFIG_CRYPTO_FIPS
-	if (unlikely(in_fips_err()))
-		return (-EACCES);
-#endif
-
 	if (unlikely(err < 0))
 		goto finish;
 

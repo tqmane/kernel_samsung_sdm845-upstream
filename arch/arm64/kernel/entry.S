@@ -32,16 +32,11 @@
 #include <asm/memory.h>
 #include <asm/mmu.h>
 #include <asm/processor.h>
-#include <asm/ptrace.h>
 #include <asm/thread_info.h>
 #include <asm/uaccess.h>
 #include <asm/asm-uaccess.h>
 #include <asm/unistd.h>
 #include <asm/kernel-pgtable.h>
-
-#ifdef CONFIG_RKP_CFP_ROPP
-#include <asm/rkp_cfp.h>
-#endif
 
 /*
  * Context tracking subsystem.  Used to instrument transitions
@@ -111,7 +106,7 @@ alternative_cb	arm64_enable_wa2_handling
 alternative_cb_end
 	ldr_this_cpu	\tmp2, arm64_ssbd_callback_required, \tmp1
 	cbz	\tmp2, \targ
-	ldr	\tmp2, [tsk, #TSK_TI_FLAGS]
+	ldr	\tmp2, [tsk, #TI_FLAGS]
 	tbnz	\tmp2, #TIF_SSBD, \targ
 	mov	w0, #ARM_SMCCC_ARCH_WORKAROUND_2
 	mov	w1, #\state
@@ -168,10 +163,10 @@ alternative_cb_end
 	add	x21, sp, #S_FRAME_SIZE
 	get_thread_info tsk
 	/* Save the task's original addr_limit and set USER_DS */
-	ldr	x20, [tsk, #TSK_TI_ADDR_LIMIT]
+	ldr	x20, [tsk, #TI_ADDR_LIMIT]
 	str	x20, [sp, #S_ORIG_ADDR_LIMIT]
 	mov	x20, #USER_DS
-	str	x20, [tsk, #TSK_TI_ADDR_LIMIT]
+	str	x20, [tsk, #TI_ADDR_LIMIT]
 	/* No need to reset PSTATE.UAO, hardware's already set it to 0 for us */
 #ifdef CONFIG_RKP_CFP_ROPP
 	ropp_load_key 	tsk
@@ -341,6 +336,22 @@ alternative_insn eret, nop, ARM64_UNMAP_KERNEL_AT_EL0
 	.endif
 	.endm
 
+	.if	\el == 0
+alternative_insn eret, nop, ARM64_UNMAP_KERNEL_AT_EL0
+#ifdef CONFIG_UNMAP_KERNEL_AT_EL0
+	bne	4f
+	msr	far_el1, x30
+	tramp_alias	x30, tramp_exit_native
+	br	x30
+4:
+	tramp_alias	x30, tramp_exit_compat
+	br	x30
+#endif
+	.else
+	eret
+	.endif
+	.endm
+
 	.macro	irq_stack_entry
 	mov	x19, sp			// preserve the original sp
 
@@ -413,7 +424,6 @@ tsk	.req	x28		// current thread_info
 VECTOR_ENTRY(vectors)
 #else
 ENTRY(vectors)
-#endif
 	kernel_ventry	1, sync_invalid			// Synchronous EL1t
 	kernel_ventry	1, irq_invalid			// IRQ EL1t
 	kernel_ventry	1, fiq_invalid			// FIQ EL1t
@@ -947,29 +957,6 @@ el0_svc_naked:					// compat entry point
 	b.ne	__sys_trace
 	cmp     scno, sc_nr                     // check upper syscall limit
 	b.hs	ni_sys
-#ifdef CONFIG_SECURITY_DEFEX
-/*
- * Defex enter hook
- */
-
-	ldr	x16, =defex_syscall_catch_enter
-	ldr	x16, [x16]
-	cmp	x16, xzr
-	b.eq	2f
-	mov	x0, scno
-	mov	x1, sp
-	blr	x16
-
-	cbnz	w0, ret_fast_syscall		// block this syscall?
-#	adr	lr, ret_fast_syscall		// return address (not needed here)
-
-	ldp	x0, x1, [sp]			// restore the syscall args
-	ldp	x2, x3, [sp, #S_X2]
-	ldp	x4, x5, [sp, #S_X4]
-	ldp	x6, x7, [sp, #S_X6]
-
-2:
-#endif
 	mask_nospec64 scno, sc_nr, x19	// enforce bounds for syscall number
 	ldr	x16, [stbl, scno, lsl #3]	// address in the syscall table
 	blr	x16				// call sys_* routine
@@ -1044,24 +1031,14 @@ __ni_sys_trace:
 
 	.macro tramp_map_kernel, tmp
 	mrs	\tmp, ttbr1_el1
-	sub	\tmp, \tmp, #(SWAPPER_DIR_SIZE + RESERVED_TTBR0_SIZE)
+	sub	\tmp, \tmp, #SWAPPER_DIR_SIZE
 	bic	\tmp, \tmp, #USER_ASID_FLAG
 	msr	ttbr1_el1, \tmp
-#ifdef CONFIG_ARCH_MSM8996
-	/* ASID already in \tmp[63:48] */
-	movk	\tmp, #:abs_g2_nc:(TRAMP_VALIAS >> 12)
-	movk	\tmp, #:abs_g1_nc:(TRAMP_VALIAS >> 12)
-	/* 2MB boundary containing the vectors, so we nobble the walk cache */
-	movk	\tmp, #:abs_g0_nc:((TRAMP_VALIAS & ~(SZ_2M - 1)) >> 12)
-	isb
-	tlbi	vae1, \tmp
-	dsb	nsh
-#endif /* CONFIG_ARCH_MSM8996 */
 	.endm
 
 	.macro tramp_unmap_kernel, tmp
 	mrs	\tmp, ttbr1_el1
-	add	\tmp, \tmp, #(SWAPPER_DIR_SIZE + RESERVED_TTBR0_SIZE)
+	add	\tmp, \tmp, #SWAPPER_DIR_SIZE
 	orr	\tmp, \tmp, #USER_ASID_FLAG
 	msr	ttbr1_el1, \tmp
 	/*
@@ -1088,9 +1065,7 @@ __ni_sys_trace:
 	tramp_map_kernel	x30
 #ifdef CONFIG_RANDOMIZE_BASE
 	adr	x30, tramp_vectors + PAGE_SIZE
-#ifndef CONFIG_ARCH_MSM8996
 	isb
-#endif
 	ldr	x30, [x30]
 #else
 	ldr	x30, =vectors
@@ -1113,11 +1088,7 @@ __ni_sys_trace:
 	.endm
 
 	.align	11
-#ifdef CONFIG_RKP_CFP_JOPP
-VECTOR_ENTRY(tramp_vectors)
-#else
 ENTRY(tramp_vectors)
-#endif
 	.space	0x400
 
 	tramp_ventry

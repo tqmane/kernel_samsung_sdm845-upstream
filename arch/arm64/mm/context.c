@@ -233,12 +233,7 @@ switch_mm_fastpath:
 
 	arm64_apply_bp_hardening();
 
-	/*
-	 * Defer TTBR0_EL1 setting for user threads to uaccess_enable() when
-	 * emulating PAN.
-	 */
-	if (!system_uses_ttbr0_pan())
-		cpu_switch_mm(mm->pgd, mm);
+	cpu_switch_mm(mm->pgd, mm);
 }
 
 /* Errata workaround post TTBRx_EL1 update. */

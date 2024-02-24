@@ -173,6 +173,16 @@ static void stmpe_gpio_irq_sync_unlock(struct irq_data *d)
 	};
 	int i, j;
 
+	/*
+	 * STMPE1600: to be able to get IRQ from pins,
+	 * a read must be done on GPMR register, or a write in
+	 * GPSR or GPCR registers
+	 */
+	if (stmpe->partnum == STMPE1600) {
+		stmpe_reg_read(stmpe, stmpe->regs[STMPE_IDX_GPMR_LSB]);
+		stmpe_reg_read(stmpe, stmpe->regs[STMPE_IDX_GPMR_CSB]);
+	}
+
 	for (i = 0; i < CACHE_NR_REGS; i++) {
 		/* STMPE801 doesn't have RE and FE registers */
 		if ((stmpe->partnum == STMPE801) &&
@@ -208,7 +218,7 @@ static void stmpe_gpio_irq_mask(struct irq_data *d)
 static void stmpe_gpio_irq_unmask(struct irq_data *d)
 {
 	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct stmpe_gpio *stmpe_gpio = to_stmpe_gpio(gc);
+	struct stmpe_gpio *stmpe_gpio = gpiochip_get_data(gc);
 	int offset = d->hwirq;
 	int regoffset = offset / 8;
 	int mask = 1 << (offset % 8);

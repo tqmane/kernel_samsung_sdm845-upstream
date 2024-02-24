@@ -86,11 +86,6 @@ int crypto_hash_walk_done(struct crypto_hash_walk *walk, int err)
 {
 	unsigned int alignmask = walk->alignmask;
 
-#ifdef CONFIG_CRYPTO_FIPS
-	if (unlikely(in_fips_err()))
-		return -EACCES;
-#endif
-
 	walk->data -= walk->offset;
 
 	if (walk->entrylen && (walk->offset & alignmask) && !err) {
